@@ -54,13 +54,12 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
     restart: unless-stopped
+    network_mode: host
     command: tunnel --no-autoupdate run
     environment:
       - TUNNEL_TOKEN=${TUNNEL_TOKEN}
     depends_on:
       - custompbx
-    networks:
-      - fs_net
 
 networks:
   fs_net:

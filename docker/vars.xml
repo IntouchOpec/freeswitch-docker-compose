@@ -18,4 +18,8 @@
 
   <!-- Hold music -->
   <X-PRE-PROCESS cmd="set" data="hold_music=local_stream://moh"/>
+
+  <!-- Media timeouts (seconds) -->
+  <X-PRE-PROCESS cmd="set" data="media_timeout=300"/>
+  <X-PRE-PROCESS cmd="set" data="media_hold_timeout=1800"/>
 </include>
