@@ -1,0 +1,8 @@
+<configuration name="acl.conf" description="Network Lists">
+  <network-lists>
+    <list name="docker_net" default="deny">
+      <node type="allow" cidr="172.18.0.0/16"/>
+      <node type="allow" cidr="127.0.0.0/8"/>
+    </list>
+  </network-lists>
+</configuration>

@@ -1,0 +1,27 @@
+<profile name="internal">
+  <domains>
+    <domain name="all" alias="true" parse="true"/>
+  </domains>
+  <settings>
+    <param name="username" value="FreeSWITCH"/>
+    <param name="realm" value="$${domain}"/>
+    <param name="sip-ip" value="$${domain}"/>
+    <param name="ext-sip-ip" value="auto"/>
+    <param name="sip-port" value="$${internal_sip_port}"/>
+    <param name="rtp-ip" value="$${domain}"/>
+    <param name="ext-rtp-ip" value="auto"/>
+    <param name="local-network-acl" value="localnet.auto"/>
+    <param name="apply-nat-acl" value="nat.auto"/>
+    <param name="auth-calls" value="true"/>
+    <param name="auth-all-packets" value="false"/>
+    <param name="inbound-codec-prefs" value="OPUS,G722,PCMU,PCMA,G729"/>
+    <param name="outbound-codec-prefs" value="OPUS,G722,PCMU,PCMA,G729"/>
+    <param name="hold-music" value="$${hold_music}"/>
+    <param name="context" value="default"/>
+    <param name="dtmf-duration" value="2000"/>
+    <!-- Fixed: use media_timeout variables instead of deprecated params -->
+    <param name="media-timeout" value="$${media_timeout}"/>
+    <param name="media-hold-timeout" value="$${media_hold_timeout}"/>
+    <param name="tls" value="false"/>
+  </settings>
+</profile>

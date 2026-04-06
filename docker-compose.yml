@@ -1,0 +1,67 @@
+services:
+
+  freeswitch:
+    hostname: docker-fs
+    image: safarov/freeswitch:latest
+    container_name: freeswitch
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./docker/event_socket.conf.xml:/usr/share/freeswitch/conf/vanilla/autoload_configs/event_socket.conf.xml
+      - ./docker/acl.conf.xml:/usr/share/freeswitch/conf/vanilla/autoload_configs/acl.conf.xml
+      - ./docker/modules.conf.xml:/usr/share/freeswitch/conf/vanilla/autoload_configs/modules.conf.xml
+      - ./docker/vars.xml:/usr/share/freeswitch/conf/vanilla/vars.xml
+      - ./docker/sip_profiles/internal.xml:/usr/share/freeswitch/conf/vanilla/sip_profiles/internal.xml
+      - ./docker/directory:/usr/share/freeswitch/conf/vanilla/directory
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: fusionpbx_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: custompbx
+      POSTGRES_USER: custompbx
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U custompbx"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - fs_net
+    volumes:
+      - ./docker/postgres_data:/var/lib/postgresql/data   # ← added
+      - ./docker/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh 
+  custompbx:
+    image: ghcr.io/custompbx/custompbx:latest
+    container_name: custompbx
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./docker/config.json:/app/config.json
+    depends_on:
+      postgres:
+        condition: service_healthy
+      freeswitch:
+        condition: service_started
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    depends_on:
+      - custompbx
+    networks:
+      - fs_net
+
+networks:
+  fs_net:
+    driver: bridge

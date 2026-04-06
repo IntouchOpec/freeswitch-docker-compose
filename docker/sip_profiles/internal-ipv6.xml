@@ -1,0 +1,6 @@
+<!-- IPv6 profile disabled -->
+<profile name="internal-ipv6">
+  <settings>
+    <param name="disabled" value="true"/>
+  </settings>
+</profile>
