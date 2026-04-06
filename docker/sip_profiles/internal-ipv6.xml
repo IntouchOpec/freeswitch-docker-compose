@@ -1,6 +1,1 @@
-<!-- IPv6 profile disabled -->
-<profile name="internal-ipv6">
-  <settings>
-    <param name="disabled" value="true"/>
-  </settings>
-</profile>
+<!-- IPv6 profile intentionally disabled: no <profile> element so sofia skips this file -->
