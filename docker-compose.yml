@@ -12,6 +12,7 @@ services:
       - ./docker/modules.conf.xml:/usr/share/freeswitch/conf/vanilla/autoload_configs/modules.conf.xml
       - ./docker/vars.xml:/usr/share/freeswitch/conf/vanilla/vars.xml
       - ./docker/sip_profiles/internal.xml:/usr/share/freeswitch/conf/vanilla/sip_profiles/internal.xml
+      - ./docker/sip_profiles/internal-ipv6.xml:/usr/share/freeswitch/conf/vanilla/sip_profiles/internal-ipv6.xml
       - ./docker/directory:/usr/share/freeswitch/conf/vanilla/directory
     cap_add:
       - SYS_NICE
