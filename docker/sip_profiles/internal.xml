@@ -5,11 +5,11 @@
   <settings>
     <param name="username" value="FreeSWITCH"/>
     <param name="realm" value="$${domain}"/>
-    <param name="sip-ip" value="$${domain}"/>
-    <param name="ext-sip-ip" value="auto"/>
+    <param name="sip-ip" value="0.0.0.0"/>
+    <param name="ext-sip-ip" value="$${external_sip_ip}"/>
     <param name="sip-port" value="$${internal_sip_port}"/>
-    <param name="rtp-ip" value="$${domain}"/>
-    <param name="ext-rtp-ip" value="auto"/>
+    <param name="rtp-ip" value="0.0.0.0"/>
+    <param name="ext-rtp-ip" value="$${external_rtp_ip}"/>
     <param name="local-network-acl" value="localnet.auto"/>
     <param name="apply-nat-acl" value="nat.auto"/>
     <param name="auth-calls" value="true"/>

@@ -9,8 +9,8 @@
   <X-PRE-PROCESS cmd="set" data="default_password=1234"/>
 
   <!-- SIP port -->
-  <X-PRE-PROCESS cmd="set" data="internal_sip_port=5060"/>
-  <X-PRE-PROCESS cmd="set" data="internal_tls_port=5061"/>
+  <X-PRE-PROCESS cmd="set" data="internal_sip_port=5080"/>
+  <X-PRE-PROCESS cmd="set" data="internal_tls_port=5081"/>
 
   <!-- RTP port range -->
   <X-PRE-PROCESS cmd="set" data="rtp_start_port=16384"/>
