@@ -7,6 +7,7 @@ services:
     restart: unless-stopped
     network_mode: host
     volumes:
+      # vanilla templates (used on first-run copy)
       - ./docker/event_socket.conf.xml:/usr/share/freeswitch/conf/vanilla/autoload_configs/event_socket.conf.xml
       - ./docker/acl.conf.xml:/usr/share/freeswitch/conf/vanilla/autoload_configs/acl.conf.xml
       - ./docker/modules.conf.xml:/usr/share/freeswitch/conf/vanilla/autoload_configs/modules.conf.xml
@@ -14,6 +15,14 @@ services:
       - ./docker/sip_profiles/internal.xml:/usr/share/freeswitch/conf/vanilla/sip_profiles/internal.xml
       - ./docker/sip_profiles/internal-ipv6.xml:/usr/share/freeswitch/conf/vanilla/sip_profiles/internal-ipv6.xml
       - ./docker/directory:/usr/share/freeswitch/conf/vanilla/directory
+      # runtime config (always in effect regardless of first-run state)
+      - ./docker/event_socket.conf.xml:/etc/freeswitch/autoload_configs/event_socket.conf.xml
+      - ./docker/acl.conf.xml:/etc/freeswitch/autoload_configs/acl.conf.xml
+      - ./docker/modules.conf.xml:/etc/freeswitch/autoload_configs/modules.conf.xml
+      - ./docker/vars.xml:/etc/freeswitch/vars.xml
+      - ./docker/sip_profiles/internal.xml:/etc/freeswitch/sip_profiles/internal.xml
+      - ./docker/sip_profiles/internal-ipv6.xml:/etc/freeswitch/sip_profiles/internal-ipv6.xml
+      - ./docker/directory:/etc/freeswitch/directory
     cap_add:
       - SYS_NICE
       - NET_ADMIN

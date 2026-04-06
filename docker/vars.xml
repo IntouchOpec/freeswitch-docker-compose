@@ -22,4 +22,8 @@
   <!-- Media timeouts (seconds) -->
   <X-PRE-PROCESS cmd="set" data="media_timeout=300"/>
   <X-PRE-PROCESS cmd="set" data="media_hold_timeout=1800"/>
+
+  <!-- Outbound caller ID defaults (referenced in directory user XMLs) -->
+  <X-PRE-PROCESS cmd="set" data="outbound_caller_name=FreeSWITCH"/>
+  <X-PRE-PROCESS cmd="set" data="outbound_caller_id=0000000000"/>
 </include>
