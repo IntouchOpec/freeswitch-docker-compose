@@ -49,6 +49,7 @@ run_remote "docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'"
 echo ""
 echo "[ 3 ] SIP Profiles"
 run_remote "docker exec freeswitch fs_cli -x 'sofia status'"
+run_remote "docker exec freeswitch fs_cli -x 'sofia status profile internal'"
 
 # ── 4. SIP OPTIONS ping (server reachability) ─────────────────────────────────
 echo ""

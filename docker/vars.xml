@@ -11,6 +11,8 @@
   <!-- SIP port -->
   <X-PRE-PROCESS cmd="set" data="internal_sip_port=5060"/>
   <X-PRE-PROCESS cmd="set" data="internal_tls_port=5061"/>
+  <X-PRE-PROCESS cmd="set" data="internal_ws_port=5066"/>
+  <X-PRE-PROCESS cmd="set" data="internal_wss_port=7443"/>
 
   <!-- RTP port range -->
   <X-PRE-PROCESS cmd="set" data="rtp_start_port=16384"/>
