@@ -82,7 +82,7 @@ run_remote "docker exec freeswitch fs_cli -x \
 echo ""
 echo "[ 9 ] Call Test — originate 1000 → 1001 (expects SUBSCRIBER_ABSENT if not live)"
 run_remote "docker exec freeswitch fs_cli -x \
-  \"originate {originate_timeout=10}user/${EXT_1000} user/${EXT_1001}\" 2>&1"
+  \"originate {originate_timeout=10}user/${EXT_1000} ${EXT_1001} XML default\" 2>&1"
 
 # ── 10. FreeSWITCH channel & call stats ───────────────────────────────────────
 echo ""

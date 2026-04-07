@@ -1,0 +1,65 @@
+=========================================
+ FreeSWITCH Test Suite
+ Remote: ubuntu@192.168.1.107  |  SIP: 192.168.1.107:5060
+=========================================
+
+[ 1 ] SSH & System
+OK
+Linux free 6.8.0-107-generic #107-Ubuntu SMP PREEMPT_DYNAMIC Fri Mar 13 19:51:50 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+
+[ 2 ] Docker Containers
+NAMES          STATUS                    PORTS
+cloudflared    Up 4 hours                
+custompbx      Up 4 hours                
+fusionpbx_db   Up 4 hours (healthy)      0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+freeswitch     Up 22 minutes (healthy)   
+
+[ 3 ] SIP Profiles
+                     Name	   Type	                                      Data	State
+=================================================================================================
+            external-ipv6	profile	  sip:mod_sofia@[2405:9800:b660:1e2a:be24:11ff:fe92:adca]:5060	RUNNING (0)
+                 external	profile	          sip:mod_sofia@192.168.1.107:5060	RUNNING (0)
+                 internal	profile	          sip:mod_sofia@192.168.1.107:5080	RUNNING (0)
+=================================================================================================
+3 profiles 0 aliases
+
+
+[ 4 ] SIP OPTIONS Ping (server reachability)
+0: 'no Warning header found' (0.004 ms) SIP/2.0 200 OK
+
+[ 5 ] SIP REGISTER — ext 1000 (password: 1234)
+0: 'no Warning header found' (0.004 ms) SIP/2.0 200 OK
+
+[ 6 ] SIP REGISTER — ext 1001 (password: 1234)
+0: 'no Warning header found' (0.004 ms) SIP/2.0 200 OK
+
+[ 7 ] Registered Users (FreeSWITCH)
+reg_user,realm,token,url,expires,network_ip,network_port,network_proto,hostname,metadata
+1000,192.168.1.107,xNcJU-y_EZTpHNBcbf0A2Q..,sofia/internal/sip:1000@192.168.1.105:5820;transport=tcp,1775487320,192.168.1.105,63227,tcp,docker-fs,
+1001,192.168.1.107,JBFRrxE8v2UvuUCvIcbB1Q..,sofia/external/sip:1001@192.168.1.101:5960,1775486945,192.168.1.101,5960,udp,docker-fs,
+
+2 total.
+
+
+[ 8 ] Call Test — loopback originate → park (dialplan check)
++OK 26e5126d-0213-49b0-8553-a54a4980e9f0
+
+
+[ 9 ] Call Test — originate 1000 → 1001 (expects SUBSCRIBER_ABSENT if not live)
+-ERR NO_ANSWER
+
+
+[ 10 ] FreeSWITCH Stats
+UP 0 years, 0 days, 0 hours, 22 minutes, 23 seconds, 217 milliseconds, 337 microseconds
+FreeSWITCH (Version 1.10.12 -release-10222002881-a88d069d6fgit a88d069 2024-08-02 21:02:27Z 64bit) is ready
+8 session(s) since startup
+2 session(s) - peak 3, last 5min 3 
+0 session(s) per Sec out of max 30, peak 2, last 5min 2 
+1000 session(s) max
+min idle cpu 0.00/91.50
+Current Stack Size/Max 240K/8192K
+
+
+=========================================
+ Done
+=========================================

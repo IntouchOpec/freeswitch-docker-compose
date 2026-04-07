@@ -12,6 +12,7 @@
     <load module="mod_commands"/>
     <load module="mod_dptools"/>
     <load module="mod_dialplan_xml"/>
+    <load module="mod_xml_curl"/>
     <load module="mod_voicemail"/>
     <load module="mod_conference"/>
     <load module="mod_db"/>

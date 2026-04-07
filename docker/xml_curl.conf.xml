@@ -1,0 +1,10 @@
+<configuration name="xml_curl.conf" description="cURL XML Gateway">
+  <bindings>
+    <binding name="custompbx">
+      <param name="gateway-url" value="http://127.0.0.1:8081/conf/config"/>
+      <param name="bindings" value="dialplan|directory"/>
+      <!-- Fall back to static XML if custompbx is unreachable -->
+      <param name="xml-root-path" value="/etc/freeswitch/dialplan"/>
+    </binding>
+  </bindings>
+</configuration>

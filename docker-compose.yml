@@ -15,6 +15,8 @@ services:
       - ./docker/sip_profiles/internal.xml:/usr/share/freeswitch/conf/vanilla/sip_profiles/internal.xml
       - ./docker/sip_profiles/internal-ipv6.xml:/usr/share/freeswitch/conf/vanilla/sip_profiles/internal-ipv6.xml
       - ./docker/directory:/usr/share/freeswitch/conf/vanilla/directory
+      - ./docker/dialplan:/usr/share/freeswitch/conf/vanilla/dialplan
+      - ./docker/xml_curl.conf.xml:/usr/share/freeswitch/conf/vanilla/autoload_configs/xml_curl.conf.xml
       # runtime config (always in effect regardless of first-run state)
       - ./docker/event_socket.conf.xml:/etc/freeswitch/autoload_configs/event_socket.conf.xml
       - ./docker/acl.conf.xml:/etc/freeswitch/autoload_configs/acl.conf.xml
@@ -23,6 +25,8 @@ services:
       - ./docker/sip_profiles/internal.xml:/etc/freeswitch/sip_profiles/internal.xml
       - ./docker/sip_profiles/internal-ipv6.xml:/etc/freeswitch/sip_profiles/internal-ipv6.xml
       - ./docker/directory:/etc/freeswitch/directory
+      - ./docker/dialplan:/etc/freeswitch/dialplan
+      - ./docker/xml_curl.conf.xml:/etc/freeswitch/autoload_configs/xml_curl.conf.xml
     cap_add:
       - SYS_NICE
       - NET_ADMIN

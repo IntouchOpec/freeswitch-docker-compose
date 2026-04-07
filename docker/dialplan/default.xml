@@ -1,0 +1,42 @@
+<include>
+  <context name="default">
+
+    <!-- ── Local extensions 1000–1009 ──────────────────────────────────── -->
+    <extension name="local_extension">
+      <condition field="destination_number" expression="^(100[0-9])$">
+        <action application="set" data="dialed_extension=$1"/>
+        <action application="export" data="dialed_extension=$1"/>
+        <action application="set" data="ringback=${us-ring}"/>
+        <action application="set" data="call_timeout=30"/>
+        <action application="bridge" data="user/$1@$${domain}"/>
+        <!-- If no answer, drop to voicemail -->
+        <action application="voicemail" data="default $${domain} $1"/>
+      </condition>
+    </extension>
+
+    <!-- ── Echo / loopback test (9196) ────────────────────────────────── -->
+    <extension name="echo">
+      <condition field="destination_number" expression="^9196$">
+        <action application="answer"/>
+        <action application="echo"/>
+      </condition>
+    </extension>
+
+    <!-- ── Milliwatt tone test (9197) ─────────────────────────────────── -->
+    <extension name="milliwatt">
+      <condition field="destination_number" expression="^9197$">
+        <action application="answer"/>
+        <action application="playback" data="tone_stream://%(251,0,1004)"/>
+      </condition>
+    </extension>
+
+    <!-- ── Voicemail check (*98) ───────────────────────────────────────── -->
+    <extension name="voicemail_check">
+      <condition field="destination_number" expression="^\*98$">
+        <action application="answer"/>
+        <action application="voicemail" data="check default $${domain} ${caller_id_number}"/>
+      </condition>
+    </extension>
+
+  </context>
+</include>
