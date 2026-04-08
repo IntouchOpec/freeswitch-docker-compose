@@ -28,5 +28,7 @@
     <load module="mod_tone_stream"/>
     <load module="mod_spandsp"/>
     <load module="mod_say_en"/>
+    <!-- Codecs for WebRTC / WebSocket SIP -->
+    <load module="mod_opus"/>
   </modules>
 </configuration>

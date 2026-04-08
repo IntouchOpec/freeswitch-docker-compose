@@ -73,21 +73,55 @@ echo ""
 echo "[ 7 ] Registered Users (FreeSWITCH)"
 run_remote "docker exec freeswitch fs_cli -x 'show registrations'"
 
-# ── 8. Call test: loopback → park (validates dialplan routing) ────────────────
+# ── 8. Call test: loopback → echo (validates dialplan + RTP) ─────────────────
 echo ""
-echo "[ 8 ] Call Test — loopback originate → park (dialplan check)"
+echo "[ 8 ] Call Test — loopback originate → echo (auto-answer, dialplan check)"
 run_remote "docker exec freeswitch fs_cli -x \
   \"originate {originate_timeout=15}loopback/9196/default &echo()\" 2>&1"
 
-# ── 9. Call test: 1000 → 1001 user bridge (both registered via sipsak) ─────────
+# ── 9. Call test: guaranteed connect — loopback B2BUA, both legs auto-answer ──
 echo ""
-echo "[ 9 ] Call Test — originate 1000 → 1001 (expects SUBSCRIBER_ABSENT if not live)"
-run_remote "docker exec freeswitch fs_cli -x \
-  \"originate {originate_timeout=10}user/${EXT_1000} ${EXT_1001} XML default\" 2>&1"
+echo "[ 9 ] Call Test — full B2BUA connect (auto-answer, expects +OK)"
+OUTPUT9=$(run_remote "docker exec freeswitch fs_cli -x \
+  \"originate {originate_timeout=15,ignore_early_media=true}loopback/9196/default &park()\" 2>&1")
+echo "  $OUTPUT9"
+PARK_UUID=$(echo "$OUTPUT9" | awk '/^\+OK/{print $2}')
+[ -n "$PARK_UUID" ] && \
+  run_remote "docker exec freeswitch fs_cli -x \"uuid_kill $PARK_UUID\"" > /dev/null 2>&1
+if echo "$OUTPUT9" | grep -q '^\+OK'; then
+  echo -e "  [$PASS_OK] Call connected successfully"
+else
+  echo -e "  [$FAIL_OK] Call failed to connect"
+fi
 
-# ── 10. FreeSWITCH channel & call stats ───────────────────────────────────────
+# ── 10. Call test: 1000 → 1001 live phone bridge (retry until +OK or 3 tries) ─
 echo ""
-echo "[ 10 ] FreeSWITCH Stats"
+echo "[ 10 ] Call Test — originate $EXT_1000 → $EXT_1001 (retry up to 3x)"
+CALL_OK=false
+for attempt in 1 2 3; do
+  RESULT=$(run_remote "docker exec freeswitch fs_cli -x \
+    \"originate {originate_timeout=20}user/${EXT_1000} ${EXT_1001} XML default\" 2>&1")
+  echo "  Attempt $attempt/3: $RESULT"
+  if echo "$RESULT" | grep -q '^\+OK'; then
+    CALL_OK=true
+    break
+  fi
+  [ "$attempt" -lt 3 ] && sleep 5
+done
+if $CALL_OK; then
+  echo -e "  [$PASS_OK] Live call connected"
+else
+  echo -e "  [$FAIL_OK] Live call did not connect (phone not answered — register & answer to pass)"
+fi
+
+# ── 11. WebSocket / WebRTC profile bindings ───────────────────────────────────
+echo ""
+echo "[ 11 ] WebSocket / WebRTC bindings (ws:$${internal_ws_port} wss:$${internal_wss_port})"
+run_remote "docker exec freeswitch fs_cli -x 'sofia status profile internal'"
+
+# ── 12. FreeSWITCH channel & call stats ───────────────────────────────────────
+echo ""
+echo "[ 12 ] FreeSWITCH Stats"
 run_remote "docker exec freeswitch fs_cli -x 'status'"
 
 echo ""
