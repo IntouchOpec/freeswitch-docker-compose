@@ -17,6 +17,10 @@
     <param name="auth-all-packets" value="false"/>
     <param name="inbound-codec-prefs" value="OPUS,G722,PCMU,PCMA,G729"/>
     <param name="outbound-codec-prefs" value="OPUS,G722,PCMU,PCMA,G729"/>
+    <param name="inbound-late-negotiation" value="true"/>
+    <!-- Force RTP through FreeSWITCH — prevents drop after answer -->
+    <param name="proxy-media" value="true"/>
+    <param name="aggressive-nat-detection" value="false"/>
     <param name="hold-music" value="$${hold_music}"/>
     <param name="context" value="default"/>
     <param name="dtmf-duration" value="2000"/>

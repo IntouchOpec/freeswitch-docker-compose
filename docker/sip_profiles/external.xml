@@ -25,16 +25,23 @@
     <param name="auth-calls" value="true"/>
     <param name="auth-all-packets" value="false"/>
 
-    <!-- Explicit codecs — fixes "INCOMPATIBLE_DESTINATION" -->
+    <!-- Explicit codecs — fixes INCOMPATIBLE_DESTINATION -->
     <param name="inbound-codec-prefs" value="OPUS,G722,PCMU,PCMA,G729"/>
     <param name="outbound-codec-prefs" value="OPUS,G722,PCMU,PCMA,G729"/>
+    <!-- Late negotiation: accept call first, agree codec after -->
+    <param name="inbound-late-negotiation" value="true"/>
+
+    <!-- Force all RTP through FreeSWITCH (fixes "รับแล้วหลุด" / media timeout) -->
+    <param name="proxy-media" value="true"/>
+
+    <!-- LAN phones — do NOT rewrite SDP IPs aggressively -->
+    <param name="aggressive-nat-detection" value="false"/>
 
     <param name="hold-music" value="$${hold_music}"/>
     <param name="dtmf-duration" value="2000"/>
     <param name="rtp-timer-name" value="soft"/>
     <param name="local-network-acl" value="localnet.auto"/>
     <param name="apply-nat-acl" value="nat.auto"/>
-    <param name="aggressive-nat-detection" value="true"/>
     <param name="manage-presence" value="false"/>
     <param name="media-timeout" value="$${media_timeout}"/>
     <param name="media-hold-timeout" value="$${media_hold_timeout}"/>
