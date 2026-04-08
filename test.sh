@@ -47,11 +47,16 @@ run_remote "echo OK && uname -a"
 
 # ── 1b. Pull latest config & reload FreeSWITCH XML + internal profile ─────────
 echo ""
-echo "[ 1b ] Apply config changes (git pull → reloadxml → restart profile)"
+echo "[ 1b ] Apply config changes (git pull → reloadxml → stop → start internal)"
 run_remote "cd $REMOTE_DIR && git pull --ff-only"
 run_remote "docker exec freeswitch fs_cli -x 'reloadxml'"
-run_remote "docker exec freeswitch fs_cli -x 'sofia restart profile internal'"
-sleep 3  # give Sofia time to bring the profile up
+sleep 1
+# Stop first — suppress error if profile is in invalid/dead state (can't be restarted, only started)
+run_remote "docker exec freeswitch fs_cli -x 'sofia profile internal stop'" 2>/dev/null || true
+sleep 1
+PROFILE_START=$(run_remote "docker exec freeswitch fs_cli -x 'sofia profile internal start' 2>&1")
+echo "  sofia profile internal start: $PROFILE_START"
+sleep 5  # give Sofia time to fully bind the port
 
 # ── 2. Docker containers ───────────────────────────────────────────────────────
 echo ""
@@ -131,15 +136,16 @@ else
   fi
 fi
 
-# ── 11. WebSocket / WebRTC profile bindings ───────────────────────────────────
+# ── 11. Internal profile status ───────────────────────────────────────────────
 echo ""
-echo "[ 11 ] WebSocket bindings (ws port: $WS_PORT)"
+echo "[ 11 ] Internal profile status (should be RUNNING on port 5080, ws:$WS_PORT)"
 PROFILE_STATUS=$(run_remote "docker exec freeswitch fs_cli -x 'sofia status profile internal'" 2>&1)
 echo "$PROFILE_STATUS"
 if echo "$PROFILE_STATUS" | grep -q "Invalid Profile"; then
-  echo -e "  [$FAIL_OK] internal profile not running — check FreeSWITCH logs:"
-  run_remote "docker exec freeswitch fs_cli -x 'console loglevel debug'" > /dev/null 2>&1
-  run_remote "docker logs --tail 30 freeswitch 2>&1 | grep -iE 'error|warn|sofia|profile'"
+  echo -e "  [$FAIL_OK] internal profile STILL not running — forcing docker restart freeswitch"
+  run_remote "docker restart freeswitch"
+  sleep 8
+  run_remote "docker exec freeswitch fs_cli -x 'sofia status profile internal'"
 else
   echo -e "  [$PASS_OK] internal profile running"
 fi
