@@ -6,7 +6,8 @@
       <condition field="destination_number" expression="^(100[0-9])$">
         <action application="set" data="dialed_extension=$1"/>
         <action application="export" data="dialed_extension=$1"/>
-        <!-- proxy_media: export so B-leg also uses relay (profile-level ignored in v1.10.12) -->
+        <!-- proxy_media on BOTH legs: set=A-leg, export=B-leg (profile-level ignored in v1.10.12) -->
+        <action application="set" data="proxy_media=true"/>
         <action application="export" data="proxy_media=true"/>
         <!-- Override any small rtp_timeout_sec from image defaults -->
         <action application="set" data="rtp_timeout_sec=300"/>

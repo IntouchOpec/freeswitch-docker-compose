@@ -24,6 +24,8 @@
     <!-- Disable SIP session timer: prevents 13-second drop when phone sends
          Session-Expires: 13 and FreeSWITCH enforces it -->
     <param name="enable-timer" value="false"/>
+    <!-- Reject Session-Expires below 120s with 422 Session Interval Too Small -->
+    <param name="minimum-session-expires" value="120"/>
     <param name="hold-music" value="$${hold_music}"/>
     <param name="context" value="default"/>
     <param name="dtmf-duration" value="2000"/>
