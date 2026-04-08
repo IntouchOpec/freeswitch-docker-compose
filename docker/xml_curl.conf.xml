@@ -1,10 +1,10 @@
 <configuration name="xml_curl.conf" description="cURL XML Gateway">
+  <!-- dialplan and directory are handled by static XML files.
+       custompbx is notified of events via ESL (not xml_curl). -->
   <bindings>
     <binding name="custompbx">
       <param name="gateway-url" value="http://127.0.0.1:8081/conf/config"/>
-      <param name="bindings" value="dialplan|directory"/>
-      <!-- Fall back to static XML if custompbx is unreachable -->
-      <param name="xml-root-path" value="/etc/freeswitch/dialplan"/>
+      <param name="bindings" value="configuration"/>
     </binding>
   </bindings>
 </configuration>
