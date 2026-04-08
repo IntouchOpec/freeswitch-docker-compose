@@ -116,20 +116,35 @@ echo "[ 4 ] SIP OPTIONS Ping (server reachability)"
 run_remote "sipsak -s sip:ping@${SIP_IP}:${SIP_PORT} -T 3000 -v 2>&1 | grep -E 'SIP/|200|404|403|OPTIONS|error' | head -5"
 
 # ── 5. SIP REGISTER ext 1000 ──────────────────────────────────────────────────
+# NOTE: sipsak registers from the server IP (192.168.1.107). We immediately
+# unregister (Expires:0) to prevent FreeSWITCH from forking calls to the ghost
+# contact (which has no listener → triggers 480 Temporarily Unavailable).
 echo ""
 echo "[ 5 ] SIP REGISTER — ext $EXT_1000 (password: $SIP_PASS)"
 run_remote "sipsak -s sip:${EXT_1000}@${SIP_IP}:${SIP_PORT} \
   -u ${EXT_1000} -a ${SIP_PASS} -R -T 5000 -v 2>&1 | grep -E 'SIP/|200|401|403|REGISTER|registered|error'"
+# Immediately unregister so the test contact doesn't poison real call routing
+run_remote "sipsak -s sip:${EXT_1000}@${SIP_IP}:${SIP_PORT} \
+  -u ${EXT_1000} -a ${SIP_PASS} -x 0 -T 5000 2>&1 | grep -E 'SIP/|200|REGISTER' || true"
 
 # ── 6. SIP REGISTER ext 1001 ──────────────────────────────────────────────────
 echo ""
 echo "[ 6 ] SIP REGISTER — ext $EXT_1001 (password: $SIP_PASS)"
 run_remote "sipsak -s sip:${EXT_1001}@${SIP_IP}:${SIP_PORT} \
   -u ${EXT_1001} -a ${SIP_PASS} -R -T 5000 -v 2>&1 | grep -E 'SIP/|200|401|403|REGISTER|registered|error'"
+# Immediately unregister
+run_remote "sipsak -s sip:${EXT_1001}@${SIP_IP}:${SIP_PORT} \
+  -u ${EXT_1001} -a ${SIP_PASS} -x 0 -T 5000 2>&1 | grep -E 'SIP/|200|REGISTER' || true"
 
 # ── 7. Check registrations in FreeSWITCH ──────────────────────────────────────
 echo ""
 echo "[ 7 ] Registered Users (FreeSWITCH)"
+# Flush any stale server-side (sipsak) registrations that might remain from
+# previous test runs. server-originated contacts have network_ip = 127.0.0.1.
+run_remote "docker exec freeswitch fs_cli -x 'show registrations' | \
+  awk -F, '\$6==\"127.0.0.1\"{print \"unregister ext:\"\$1}'" 2>/dev/null || true
+run_remote "docker exec freeswitch fs_cli -x \
+  'sofia profile internal flush_inbound_reg 127.0.0.1'" 2>/dev/null || true
 run_remote "docker exec freeswitch fs_cli -x 'show registrations'"
 
 # ── 8. Call test: loopback → echo (validates dialplan + RTP) ─────────────────
