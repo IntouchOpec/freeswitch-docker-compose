@@ -21,10 +21,10 @@
     <!-- Force RTP through FreeSWITCH — prevents drop after answer -->
     <param name="proxy-media" value="true"/>
     <param name="aggressive-nat-detection" value="false"/>
-    <!-- Disable SIP session timer: prevents 13-second drop when phone sends
-         Session-Expires: 13 and FreeSWITCH enforces it -->
-    <param name="enable-timer" value="false"/>
-    <!-- Reject Session-Expires below 120s with 422 Session Interval Too Small -->
+    <!-- FreeSWITCH owns the session timer: proposes 1800 s, rejects anything
+         below 120 s with 422 Session Interval Too Small, handles re-INVITEs -->
+    <param name="enable-timer" value="true"/>
+    <param name="session-expires" value="1800"/>
     <param name="minimum-session-expires" value="120"/>
     <param name="hold-music" value="$${hold_music}"/>
     <param name="context" value="default"/>

@@ -37,10 +37,10 @@
     <!-- LAN phones — do NOT rewrite SDP IPs aggressively -->
     <param name="aggressive-nat-detection" value="false"/>
 
-    <!-- Disable SIP session timer: phones may send Session-Expires: 13 which
-         causes FreeSWITCH to drop the call after exactly 13 s if no refresh -->
-    <param name="enable-timer" value="false"/>
-    <!-- Reject Session-Expires below 120s with 422 Session Interval Too Small -->
+    <!-- FreeSWITCH owns the session timer: proposes 1800 s, rejects anything
+         below 120 s with 422 Session Interval Too Small, handles re-INVITEs -->
+    <param name="enable-timer" value="true"/>
+    <param name="session-expires" value="1800"/>
     <param name="minimum-session-expires" value="120"/>
 
     <param name="hold-music" value="$${hold_music}"/>
