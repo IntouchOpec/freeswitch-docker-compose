@@ -24,14 +24,8 @@
     <param name="media-hold-timeout" value="$${media_hold_timeout}"/>
     <param name="tls" value="false"/>
 
-    <!-- WebSocket transport (SIP over WS for WebRTC / browser softphones) -->
+    <!-- WebSocket transport (plain WS for WebRTC / browser softphones) -->
+    <!-- WSS requires TLS cert: set tls=true and configure cert_dir to enable -->
     <param name="ws-binding" value=":$${internal_ws_port}"/>
-    <param name="wss-binding" value=":$${internal_wss_port}"/>
-
-    <!-- WebRTC / DTLS-SRTP -->
-    <param name="rtcp-mux" value="true"/>
-    <param name="enable-soa" value="true"/>
-    <param name="apply-candidate-acl" value="localnet.auto"/>
-    <param name="apply-candidate-acl" value="wan_v4.auto"/>
   </settings>
 </profile>
