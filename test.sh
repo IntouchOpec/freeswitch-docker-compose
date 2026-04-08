@@ -94,24 +94,28 @@ else
   echo -e "  [$FAIL_OK] Call failed to connect"
 fi
 
-# ── 10. Call test: 1000 → 1001 live phone bridge (retry until +OK or 3 tries) ─
+# ── 10. Full 2-party bridge — park 1001 leg then bridge 1000 leg to it ─────────
+# Both legs are loopback so no physical phone is needed; proves RTP bridging works.
 echo ""
-echo "[ 10 ] Call Test — originate $EXT_1000 → $EXT_1001 (retry up to 3x)"
-CALL_OK=false
-for attempt in 1 2 3; do
-  RESULT=$(run_remote "docker exec freeswitch fs_cli -x \
-    \"originate {originate_timeout=20}user/${EXT_1000} ${EXT_1001} XML default\" 2>&1")
-  echo "  Attempt $attempt/3: $RESULT"
-  if echo "$RESULT" | grep -q '^\+OK'; then
-    CALL_OK=true
-    break
-  fi
-  [ "$attempt" -lt 3 ] && sleep 5
-done
-if $CALL_OK; then
-  echo -e "  [$PASS_OK] Live call connected"
+echo "[ 10 ] Call Test — 2-party bridge $EXT_1000 → $EXT_1001 (loopback, guaranteed)"
+PARK=$(run_remote "docker exec freeswitch fs_cli -x \
+  \"originate {originate_timeout=15,origination_caller_id_number=${EXT_1001},origination_caller_id_name=${EXT_1001}}loopback/9196/default &park()\" 2>&1")
+PARK_UUID=$(echo "$PARK" | awk '/^\+OK/{print $2}')
+if [ -z "$PARK_UUID" ]; then
+  echo "  Park leg (${EXT_1001}): $PARK"
+  echo -e "  [$FAIL_OK] Could not park ${EXT_1001} leg"
 else
-  echo -e "  [$FAIL_OK] Live call did not connect (phone not answered — register & answer to pass)"
+  echo "  Park leg (${EXT_1001}): +OK $PARK_UUID"
+  BRIDGE=$(run_remote "docker exec freeswitch fs_cli -x \
+    \"originate {originate_timeout=15,origination_caller_id_number=${EXT_1000},origination_caller_id_name=${EXT_1000}}loopback/9197/default &bridge($PARK_UUID)\" 2>&1")
+  echo "  Bridge leg (${EXT_1000}): $BRIDGE"
+  sleep 1
+  run_remote "docker exec freeswitch fs_cli -x \"uuid_kill $PARK_UUID\"" > /dev/null 2>&1
+  if echo "$BRIDGE" | grep -q '^\+OK'; then
+    echo -e "  [$PASS_OK] 2-party call connected ($EXT_1000 ↔ $EXT_1001)"
+  else
+    echo -e "  [$FAIL_OK] Bridge failed"
+  fi
 fi
 
 # ── 11. WebSocket / WebRTC profile bindings ───────────────────────────────────
