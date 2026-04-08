@@ -154,57 +154,85 @@ else
 fi
 
 # ── 10. Full 2-party bridge — park 1001 leg then bridge 1000 leg to it ─────────
-# Both legs are loopback so no physical phone is needed; proves RTP bridging works.
 echo ""
-echo "[ 10 ] Call Test — 2-party bridge $EXT_1000 → $EXT_1001 (loopback, guaranteed)"
+echo "[ 10 ] Call Test — 2-party loopback bridge (no phone needed, proves RTP engine)"
 PARK=$(run_remote "docker exec freeswitch fs_cli -x \
-  \"originate {originate_timeout=15,origination_caller_id_number=${EXT_1001},origination_caller_id_name=${EXT_1001}}loopback/9196/default &park()\" 2>&1")
+  \"originate {originate_timeout=15,origination_caller_id_number=${EXT_1001}}loopback/9196/default &park()\" 2>&1")
 PARK_UUID=$(echo "$PARK" | awk '/^\+OK/{print $2}')
 if [ -z "$PARK_UUID" ]; then
-  echo "  Park leg (${EXT_1001}): $PARK"
-  echo -e "  [$FAIL_OK] Could not park ${EXT_1001} leg"
+  echo "  Park leg: $PARK"
+  echo -e "  [$FAIL_OK] Could not park leg"
 else
-  echo "  Park leg (${EXT_1001}): +OK $PARK_UUID"
+  echo "  Park leg: +OK $PARK_UUID"
   BRIDGE=$(run_remote "docker exec freeswitch fs_cli -x \
-    \"originate {originate_timeout=15,origination_caller_id_number=${EXT_1000},origination_caller_id_name=${EXT_1000}}loopback/9197/default &bridge($PARK_UUID)\" 2>&1")
-  echo "  Bridge leg (${EXT_1000}): $BRIDGE"
+    \"originate {originate_timeout=15,origination_caller_id_number=${EXT_1000}}loopback/9197/default &bridge($PARK_UUID)\" 2>&1")
+  echo "  Bridge leg: $BRIDGE"
   sleep 1
   run_remote "docker exec freeswitch fs_cli -x \"uuid_kill $PARK_UUID\"" > /dev/null 2>&1
   if echo "$BRIDGE" | grep -q '^\+OK'; then
-    echo -e "  [$PASS_OK] 2-party call connected ($EXT_1000 ↔ $EXT_1001)"
+    echo -e "  [$PASS_OK] 2-party RTP bridge OK"
   else
-    echo -e "  [$FAIL_OK] Bridge failed"
+    echo -e "  [$FAIL_OK] Bridge failed: $BRIDGE"
   fi
 fi
 
-# ── 11. Internal profile status ───────────────────────────────────────────────
+# ── 10b. Live call 1000 → 1001 (real phones) ──────────────────────────────────
 echo ""
-echo "[ 11 ] Internal profile status (port 5080)"
-PROFILE_STATUS=$(run_remote "docker exec freeswitch fs_cli -x 'sofia status profile internal'" 2>&1)
-echo "$PROFILE_STATUS"
-if echo "$PROFILE_STATUS" | grep -q "Invalid Profile"; then
-  echo -e "  [$FAIL_OK] internal profile still not running — check: docker logs freeswitch"
+echo "[ 10b ] Live call $EXT_1000 → $EXT_1001 (real phones — answer $EXT_1001 to get +OK)"
+REGS=$(run_remote "docker exec freeswitch fs_cli -x 'show registrations'" 2>&1)
+echo "  Registrations:"
+echo "$REGS" | grep -E "^100[0-9]|total"
+if echo "$REGS" | grep -q "^${EXT_1001},"; then
+  LIVE=$(run_remote "docker exec freeswitch fs_cli -x \
+    \"originate {originate_timeout=15,origination_caller_id_number=${EXT_1000}}user/${EXT_1001} &echo()\" 2>&1")
+  echo "  Result: $LIVE"
+  if echo "$LIVE" | grep -q '^\+OK'; then
+    echo -e "  [$PASS_OK] Call connected and answered!"
+  elif echo "$LIVE" | grep -q 'NO_ANSWER'; then
+    echo -e "  [$PASS_OK] Routing OK — phone rang at $(echo "$REGS" | grep "^${EXT_1001}," | cut -d, -f5 | cut -d@ -f1 | sed 's/.*\///') but was not answered (expected during automated test)"
+  else
+    echo -e "  [$FAIL_OK] Unexpected: $LIVE"
+  fi
 else
-  echo -e "  [$PASS_OK] internal profile running"
+  echo -e "  [--] $EXT_1001 not registered — register PortSIP phone to $SIP_IP:$SIP_PORT and re-run"
 fi
 
-# ── 11b. custompbx WebSocket (PortSIP WSI) reachability ───────────────────────
+# ── 11. Profile status ────────────────────────────────────────────────────────
 echo ""
-echo "[ 11b ] custompbx WebSocket — ws://$SIP_IP:8080/ws (PortSIP WSI URL)"
+echo "[ 11 ] SIP profile status"
+run_remote "docker exec freeswitch fs_cli -x 'sofia status'" | grep -E "Name|profile|alias|======"
+PROFILE_STATUS=$(run_remote "docker exec freeswitch fs_cli -x 'sofia status profile internal'" 2>&1)
+if echo "$PROFILE_STATUS" | grep -q "Invalid Profile"; then
+  echo -e "  [$FAIL_OK] internal profile not running"
+else
+  INT_PORT=$(echo "$PROFILE_STATUS" | grep "^URL" | grep -oE ':[0-9]+' | tr -d ':')
+  echo -e "  [$PASS_OK] internal profile running on port ${INT_PORT:-5080}"
+fi
+EXT_STATUS=$(run_remote "docker exec freeswitch fs_cli -x 'sofia status profile external'" 2>&1)
+if echo "$EXT_STATUS" | grep -q "Invalid Profile"; then
+  echo -e "  [$FAIL_OK] external profile not running"
+else
+  EXT_PORT=$(echo "$EXT_STATUS" | grep "^URL" | grep -oE ':[0-9]+' | tr -d ':')
+  EXT_CTX=$(echo "$EXT_STATUS"  | grep "^Context" | awk '{print $2}')
+  CODECS=$(echo "$EXT_STATUS"   | grep "^CODECS IN" | cut -d$'\t' -f2)
+  echo -e "  [$PASS_OK] external profile running on port ${EXT_PORT:-5060}, context=${EXT_CTX}, codecs=${CODECS}"
+fi
+
+# ── 11b. custompbx WebSocket reachability ─────────────────────────────────────
+echo ""
+echo "[ 11b ] custompbx WebSocket (port 8080)"
 WS_RESULT=$(run_remote "curl -sv --max-time 5 \
-  -H 'Upgrade: websocket' \
-  -H 'Connection: Upgrade' \
+  -H 'Upgrade: websocket' -H 'Connection: Upgrade' \
   -H 'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==' \
   -H 'Sec-WebSocket-Version: 13' \
   http://127.0.0.1:8080/ws 2>&1")
-if echo "$WS_RESULT" | grep -qiE '101|switching|websocket'; then
-  echo -e "  [$PASS_OK] WebSocket handshake OK — configure PortSIP WSI as: ws://$SIP_IP:8080/ws"
-elif echo "$WS_RESULT" | grep -qiE 'refused|connect.*fail|timed out'; then
-  echo -e "  [$FAIL_OK] WebSocket connection refused — custompbx may need restart:"
-  run_remote "docker restart custompbx && sleep 5 && docker ps --filter name=custompbx --format '{{.Names}} {{.Status}}'"
-else
-  echo -e "  [??] Unexpected response — check manually: curl -v http://$SIP_IP:8080/ws"
-  echo "  $WS_RESULT" | tail -5
+if echo "$WS_RESULT" | grep -qiE '101|switching'; then
+  echo -e "  [$PASS_OK] WebSocket port 8080 reachable (HTTP 101)"
+  echo "  NOTE: PortSIP WSI Error = PortSIP's WSI protocol is incompatible with custompbx."
+  echo "  FIX in PortSIP:  Settings → Features → clear the 'WebSocket Server' / WSI URL field."
+elif echo "$WS_RESULT" | grep -qiE 'refused|fail'; then
+  echo -e "  [$FAIL_OK] Port 8080 refused — restarting custompbx"
+  run_remote "docker restart custompbx"
 fi
 
 # ── 12. FreeSWITCH channel & call stats ───────────────────────────────────────
