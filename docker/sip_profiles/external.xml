@@ -1,0 +1,42 @@
+<profile name="external">
+  <!-- Port 5060 — accepts phones that register without specifying a port.
+       Context is "default" so extension-to-extension calls work exactly
+       like the internal profile (port 5080). -->
+  <gateways>
+    <X-PRE-PROCESS cmd="include" data="external/*.xml"/>
+  </gateways>
+
+  <domains>
+    <domain name="all" alias="false" parse="true"/>
+  </domains>
+
+  <settings>
+    <param name="sip-ip" value="0.0.0.0"/>
+    <param name="ext-sip-ip" value="$${external_sip_ip}"/>
+    <param name="sip-port" value="5060"/>
+    <param name="rtp-ip" value="0.0.0.0"/>
+    <param name="ext-rtp-ip" value="$${external_rtp_ip}"/>
+
+    <param name="dialplan" value="XML"/>
+    <!-- Use default context so 100x extension calls are routed the same
+         as phones on the internal profile -->
+    <param name="context" value="default"/>
+
+    <param name="auth-calls" value="true"/>
+    <param name="auth-all-packets" value="false"/>
+
+    <!-- Explicit codecs — fixes "INCOMPATIBLE_DESTINATION" -->
+    <param name="inbound-codec-prefs" value="OPUS,G722,PCMU,PCMA,G729"/>
+    <param name="outbound-codec-prefs" value="OPUS,G722,PCMU,PCMA,G729"/>
+
+    <param name="hold-music" value="$${hold_music}"/>
+    <param name="dtmf-duration" value="2000"/>
+    <param name="rtp-timer-name" value="soft"/>
+    <param name="local-network-acl" value="localnet.auto"/>
+    <param name="apply-nat-acl" value="nat.auto"/>
+    <param name="manage-presence" value="false"/>
+    <param name="media-timeout" value="$${media_timeout}"/>
+    <param name="media-hold-timeout" value="$${media_hold_timeout}"/>
+    <param name="tls" value="false"/>
+  </settings>
+</profile>

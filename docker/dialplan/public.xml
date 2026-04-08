@@ -1,0 +1,14 @@
+<include>
+  <!-- Public context — safety net for calls that arrive on the external profile.
+       Routes local extensions 1000–1009 into the default context. -->
+  <context name="public">
+
+    <extension name="local_extensions_from_public">
+      <condition field="destination_number" expression="^(100[0-9])$">
+        <action application="set" data="dialed_extension=$1"/>
+        <action application="transfer" data="$1 XML default"/>
+      </condition>
+    </extension>
+
+  </context>
+</include>
