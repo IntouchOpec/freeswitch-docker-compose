@@ -45,6 +45,20 @@ echo ""
 echo "[ 1 ] SSH & System"
 run_remote "echo OK && uname -a"
 
+# ── 1c. Open all required firewall ports ──────────────────────────────────────
+echo ""
+echo "[ 1c ] Firewall — open required ports (ufw)"
+run_remote "sudo ufw allow 5080/udp   comment 'SIP internal (phones)' 2>/dev/null || true"
+run_remote "sudo ufw allow 5080/tcp   comment 'SIP internal (phones)' 2>/dev/null || true"
+run_remote "sudo ufw allow 5060/udp   comment 'SIP external (trunks)' 2>/dev/null || true"
+run_remote "sudo ufw allow 5060/tcp   comment 'SIP external (trunks)' 2>/dev/null || true"
+run_remote "sudo ufw allow 8080/tcp   comment 'custompbx WebSocket (PortSIP WSI)' 2>/dev/null || true"
+run_remote "sudo ufw allow 8081/tcp   comment 'custompbx xml_curl' 2>/dev/null || true"
+run_remote "sudo ufw allow 3478/udp   comment 'STUN' 2>/dev/null || true"
+run_remote "sudo ufw allow 16384:32768/udp comment 'RTP media' 2>/dev/null || true"
+echo "  Current ufw status:"
+run_remote "sudo ufw status numbered 2>/dev/null | grep -E '5060|5080|8080|8081|3478|16384|ALLOW' | head -20 || echo '  (ufw not active or not installed)'"
+
 # ── 1b. Pull latest config & self-heal internal profile if broken ─────────────
 echo ""
 echo "[ 1b ] Apply config (git pull → verify → docker restart if profile dead)"
@@ -172,6 +186,25 @@ if echo "$PROFILE_STATUS" | grep -q "Invalid Profile"; then
   echo -e "  [$FAIL_OK] internal profile still not running — check: docker logs freeswitch"
 else
   echo -e "  [$PASS_OK] internal profile running"
+fi
+
+# ── 11b. custompbx WebSocket (PortSIP WSI) reachability ───────────────────────
+echo ""
+echo "[ 11b ] custompbx WebSocket — ws://$SIP_IP:8080/ws (PortSIP WSI URL)"
+WS_RESULT=$(run_remote "curl -sv --max-time 5 \
+  -H 'Upgrade: websocket' \
+  -H 'Connection: Upgrade' \
+  -H 'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==' \
+  -H 'Sec-WebSocket-Version: 13' \
+  http://127.0.0.1:8080/ws 2>&1")
+if echo "$WS_RESULT" | grep -qiE '101|switching|websocket'; then
+  echo -e "  [$PASS_OK] WebSocket handshake OK — configure PortSIP WSI as: ws://$SIP_IP:8080/ws"
+elif echo "$WS_RESULT" | grep -qiE 'refused|connect.*fail|timed out'; then
+  echo -e "  [$FAIL_OK] WebSocket connection refused — custompbx may need restart:"
+  run_remote "docker restart custompbx && sleep 5 && docker ps --filter name=custompbx --format '{{.Names}} {{.Status}}'"
+else
+  echo -e "  [??] Unexpected response — check manually: curl -v http://$SIP_IP:8080/ws"
+  echo "  $WS_RESULT" | tail -5
 fi
 
 # ── 12. FreeSWITCH channel & call stats ───────────────────────────────────────
