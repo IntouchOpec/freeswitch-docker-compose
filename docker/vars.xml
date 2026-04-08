@@ -8,8 +8,9 @@
   <!-- Default password for all extensions (override per user) -->
   <X-PRE-PROCESS cmd="set" data="default_password=1234"/>
 
-  <!-- SIP port -->
-  <X-PRE-PROCESS cmd="set" data="internal_sip_port=5060"/>
+  <!-- SIP ports: internal (phones) = 5080, external (trunks) = 5060 — matches safarov/freeswitch image defaults -->
+  <X-PRE-PROCESS cmd="set" data="internal_sip_port=5080"/>
+  <X-PRE-PROCESS cmd="set" data="external_sip_port=5060"/>
   <X-PRE-PROCESS cmd="set" data="internal_tls_port=5061"/>
   <X-PRE-PROCESS cmd="set" data="internal_ws_port=5066"/>
   <X-PRE-PROCESS cmd="set" data="internal_wss_port=7443"/>

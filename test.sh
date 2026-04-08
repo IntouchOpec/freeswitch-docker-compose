@@ -5,7 +5,7 @@ HOST="ubuntu@192.168.1.107"
 PASS="P@ssw0rd"
 REMOTE_DIR="~/freeswitch-docker-compose"
 SIP_IP="192.168.1.107"
-SIP_PORT="5060"
+SIP_PORT="5080"     # internal profile (phones/extensions); external/trunks = 5060
 EXT_1000="1000"
 EXT_1001="1001"
 SIP_PASS="1234"
@@ -13,7 +13,8 @@ SIP_PASS="1234"
 PASS_OK="\033[0;32mPASS\033[0m"
 FAIL_OK="\033[0;31mFAIL\033[0m"
 
-# Ports must match vars.xml — use plain shell vars (NOT FreeSWITCH $${} syntax)
+# Ports — plain shell vars (NOT FreeSWITCH $${} syntax)
+# internal (phones): 5080  |  external (trunks): 5060  |  WS: 5066
 WS_PORT="5066"
 WSS_PORT="7443"
 

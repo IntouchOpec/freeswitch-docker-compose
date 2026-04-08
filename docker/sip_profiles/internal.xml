@@ -7,7 +7,8 @@
     <param name="realm" value="$${domain}"/>
     <param name="sip-ip" value="0.0.0.0"/>
     <param name="ext-sip-ip" value="$${external_sip_ip}"/>
-    <param name="sip-port" value="$${internal_sip_port}"/>
+    <!-- Port 5080: internal profile for phones/extensions (image default; 5060 is external/trunks) -->
+    <param name="sip-port" value="5080"/>
     <param name="rtp-ip" value="0.0.0.0"/>
     <param name="ext-rtp-ip" value="$${external_rtp_ip}"/>
     <param name="local-network-acl" value="localnet.auto"/>
