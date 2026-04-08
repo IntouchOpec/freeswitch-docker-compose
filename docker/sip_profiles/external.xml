@@ -37,6 +37,10 @@
     <!-- LAN phones — do NOT rewrite SDP IPs aggressively -->
     <param name="aggressive-nat-detection" value="false"/>
 
+    <!-- Disable SIP session timer: phones may send Session-Expires: 13 which
+         causes FreeSWITCH to drop the call after exactly 13 s if no refresh -->
+    <param name="enable-timer" value="false"/>
+
     <param name="hold-music" value="$${hold_music}"/>
     <param name="dtmf-duration" value="2000"/>
     <param name="rtp-timer-name" value="soft"/>

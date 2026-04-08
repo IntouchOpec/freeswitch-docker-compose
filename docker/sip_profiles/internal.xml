@@ -21,6 +21,9 @@
     <!-- Force RTP through FreeSWITCH — prevents drop after answer -->
     <param name="proxy-media" value="true"/>
     <param name="aggressive-nat-detection" value="false"/>
+    <!-- Disable SIP session timer: prevents 13-second drop when phone sends
+         Session-Expires: 13 and FreeSWITCH enforces it -->
+    <param name="enable-timer" value="false"/>
     <param name="hold-music" value="$${hold_music}"/>
     <param name="context" value="default"/>
     <param name="dtmf-duration" value="2000"/>
