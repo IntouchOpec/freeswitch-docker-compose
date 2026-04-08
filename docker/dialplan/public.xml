@@ -6,6 +6,7 @@
     <extension name="local_extensions_from_public">
       <condition field="destination_number" expression="^(100[0-9])$">
         <action application="set" data="dialed_extension=$1"/>
+        <action application="set" data="proxy_media=true"/>
         <action application="transfer" data="$1 XML default"/>
       </condition>
     </extension>

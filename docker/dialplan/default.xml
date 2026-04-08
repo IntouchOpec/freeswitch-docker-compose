@@ -6,6 +6,8 @@
       <condition field="destination_number" expression="^(100[0-9])$">
         <action application="set" data="dialed_extension=$1"/>
         <action application="export" data="dialed_extension=$1"/>
+        <!-- proxy_media=true: profile-level param ignored in v1.10.12; must be per-call -->
+        <action application="set" data="proxy_media=true"/>
         <action application="set" data="ringback=${us-ring}"/>
         <action application="set" data="call_timeout=30"/>
         <action application="bridge" data="user/$1@$${domain}"/>
