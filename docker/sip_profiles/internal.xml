@@ -24,9 +24,5 @@
     <param name="media-timeout" value="$${media_timeout}"/>
     <param name="media-hold-timeout" value="$${media_hold_timeout}"/>
     <param name="tls" value="false"/>
-
-    <!-- WebSocket transport (plain WS for WebRTC / browser softphones) -->
-    <!-- WSS requires TLS cert: set tls=true and configure cert_dir to enable -->
-    <param name="ws-binding" value=":$${internal_ws_port}"/>
   </settings>
 </profile>

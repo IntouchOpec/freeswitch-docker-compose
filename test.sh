@@ -45,18 +45,45 @@ echo ""
 echo "[ 1 ] SSH & System"
 run_remote "echo OK && uname -a"
 
-# ── 1b. Pull latest config & reload FreeSWITCH XML + internal profile ─────────
+# ── 1b. Pull latest config & self-heal internal profile if broken ─────────────
 echo ""
-echo "[ 1b ] Apply config changes (git pull → reloadxml → stop → start internal)"
+echo "[ 1b ] Apply config (git pull → verify → docker restart if profile dead)"
 run_remote "cd $REMOTE_DIR && git pull --ff-only"
-run_remote "docker exec freeswitch fs_cli -x 'reloadxml'"
-sleep 1
-# Stop first — suppress error if profile is in invalid/dead state (can't be restarted, only started)
-run_remote "docker exec freeswitch fs_cli -x 'sofia profile internal stop'" 2>/dev/null || true
-sleep 1
-PROFILE_START=$(run_remote "docker exec freeswitch fs_cli -x 'sofia profile internal start' 2>&1")
-echo "  sofia profile internal start: $PROFILE_START"
-sleep 5  # give Sofia time to fully bind the port
+
+# Confirm the file inside the running container has sip-port=5080
+echo "  sip-port in container /etc/freeswitch/sip_profiles/internal.xml:"
+run_remote "docker exec freeswitch grep 'sip-port' /etc/freeswitch/sip_profiles/internal.xml 2>/dev/null || echo '  (cannot read — container may be down)'"
+
+# Reload XML so FreeSWITCH re-reads all mounted config files
+run_remote "docker exec freeswitch fs_cli -x 'reloadxml'" 2>/dev/null || true
+sleep 2
+
+# Check if internal profile is alive; if not, do a full container restart
+# (sofia stop+start cannot revive a dead/invalid profile — only docker restart can)
+PROFILE_CHECK=$(run_remote "docker exec freeswitch fs_cli -x 'sofia status profile internal' 2>&1" 2>/dev/null)
+if echo "$PROFILE_CHECK" | grep -q "Invalid Profile"; then
+  echo "  internal profile is dead — restarting container, polling up to 60s..."
+  run_remote "docker restart freeswitch"
+  # Poll: wait until FreeSWITCH event socket reports "is ready"
+  READY=false
+  for i in $(seq 1 30); do
+    sleep 2
+    if run_remote "docker exec freeswitch fs_cli -x status 2>/dev/null" 2>/dev/null \
+         | grep -q "is ready"; then
+      READY=true
+      echo -e "  [$PASS_OK] FreeSWITCH ready after restart (~$((i*2))s)"
+      break
+    fi
+  done
+  $READY || echo -e "  [$FAIL_OK] FreeSWITCH did not become ready in 60s — run: docker logs freeswitch"
+else
+  echo -e "  [$PASS_OK] internal profile running — reloadxml applied"
+fi
+
+# Show which SIP ports are actually bound on the host
+echo "  Bound SIP ports (host):"
+run_remote "ss -lnup 2>/dev/null | grep -E ':5060|:5080' || \
+  netstat -lnup 2>/dev/null | grep -E ':5060|:5080' || true"
 
 # ── 2. Docker containers ───────────────────────────────────────────────────────
 echo ""
@@ -138,14 +165,11 @@ fi
 
 # ── 11. Internal profile status ───────────────────────────────────────────────
 echo ""
-echo "[ 11 ] Internal profile status (should be RUNNING on port 5080, ws:$WS_PORT)"
+echo "[ 11 ] Internal profile status (port 5080)"
 PROFILE_STATUS=$(run_remote "docker exec freeswitch fs_cli -x 'sofia status profile internal'" 2>&1)
 echo "$PROFILE_STATUS"
 if echo "$PROFILE_STATUS" | grep -q "Invalid Profile"; then
-  echo -e "  [$FAIL_OK] internal profile STILL not running — forcing docker restart freeswitch"
-  run_remote "docker restart freeswitch"
-  sleep 8
-  run_remote "docker exec freeswitch fs_cli -x 'sofia status profile internal'"
+  echo -e "  [$FAIL_OK] internal profile still not running — check: docker logs freeswitch"
 else
   echo -e "  [$PASS_OK] internal profile running"
 fi
