@@ -33,5 +33,8 @@
     <param name="media-timeout" value="$${media_timeout}"/>
     <param name="media-hold-timeout" value="$${media_hold_timeout}"/>
     <param name="tls" value="false"/>
+    <!-- WebSocket transport for browser/WebRTC clients (fixes WSI Error) -->
+    <param name="ws-binding"  value=":5066"/>
+    <param name="wss-binding" value=":7443"/>
   </settings>
 </profile>
