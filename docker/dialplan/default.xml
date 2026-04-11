@@ -9,19 +9,12 @@
         <!-- proxy_media on BOTH legs: set=A-leg, export=B-leg (profile-level ignored in v1.10.12) -->
         <action application="set" data="proxy_media=true"/>
         <action application="export" data="proxy_media=true"/>
-        <!-- Override any small rtp_timeout_sec from image defaults — set=A-leg, export=B-leg -->
-        <action application="set" data="rtp_timeout_sec=300"/>
-        <action application="export" data="rtp_timeout_sec=300"/>
-        <action application="set" data="rtp_hold_timeout_sec=1800"/>
-        <action application="export" data="rtp_hold_timeout_sec=1800"/>
         <action application="set" data="ringback=${us-ring}"/>
         <action application="set" data="call_timeout=30"/>
-        <!-- Abort cleanly if callee not registered instead of silent 480 -->
+        <!-- continue_on_fail: don't 480 silently, fall through to respond -->
         <action application="set" data="continue_on_fail=USER_NOT_REGISTERED,NO_ROUTE_DESTINATION,SUBSCRIBER_ABSENT"/>
-        <!-- Try user/ (directory lookup) first; fall back to sofia/internal directly -->
+        <!-- Bridge via directory — resolves registered contact on any profile (internal or external) -->
         <action application="bridge" data="user/$1@$${domain}"/>
-        <!-- Fallback: direct profile bridge in case directory lookup returns empty contact -->
-        <action application="bridge" data="sofia/internal/$1@$${domain}"/>
         <action application="respond" data="480 User Not Registered"/>
       </condition>
     </extension>

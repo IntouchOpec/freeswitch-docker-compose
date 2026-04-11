@@ -7,7 +7,7 @@
   </gateways>
 
   <domains>
-    <domain name="all" alias="false" parse="true"/>
+    <domain name="all" alias="true" parse="true"/>
   </domains>
 
   <settings>
@@ -24,6 +24,8 @@
 
     <param name="auth-calls" value="true"/>
     <param name="auth-all-packets" value="false"/>
+    <!-- Do NOT challenge re-INVITEs mid-call — prevents 13-second drop (SIP retry timeout) -->
+    <param name="challenge-realm" value="auto_from"/>
 
     <!-- Explicit codecs — fixes INCOMPATIBLE_DESTINATION -->
     <param name="inbound-codec-prefs" value="OPUS,G722,PCMU,PCMA,G729"/>
@@ -31,17 +33,16 @@
     <!-- Late negotiation: accept call first, agree codec after -->
     <param name="inbound-late-negotiation" value="true"/>
 
-    <!-- Force all RTP through FreeSWITCH (fixes "รับแล้วหลุด" / media timeout) -->
-    <param name="proxy-media" value="true"/>
+    <!-- Force all RTP through FreeSWITCH — correct param names for this version -->
+    <param name="inbound-proxy-media" value="true"/>
+    <param name="outbound-proxy-media" value="true"/>
 
     <!-- LAN phones — do NOT rewrite SDP IPs aggressively -->
     <param name="aggressive-nat-detection" value="false"/>
 
-    <!-- FreeSWITCH owns the session timer: proposes 1800 s, rejects anything
-         below 120 s with 422 Session Interval Too Small, handles re-INVITEs -->
-    <param name="enable-timer" value="true"/>
-    <param name="session-expires" value="1800"/>
-    <param name="minimum-session-expires" value="120"/>
+    <!-- Session timer DISABLED: prevents mid-call re-INVITE auth failure (13s drop)
+         Phones manage their own session timers independently -->
+    <param name="enable-timer" value="false"/>
 
     <param name="hold-music" value="$${hold_music}"/>
     <param name="dtmf-duration" value="2000"/>

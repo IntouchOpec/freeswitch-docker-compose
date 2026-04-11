@@ -15,17 +15,17 @@
     <param name="apply-nat-acl" value="nat.auto"/>
     <param name="auth-calls" value="true"/>
     <param name="auth-all-packets" value="false"/>
+    <!-- Do NOT challenge re-INVITEs mid-call — prevents 13-second drop -->
+    <param name="challenge-realm" value="auto_from"/>
     <param name="inbound-codec-prefs" value="OPUS,G722,PCMU,PCMA,G729"/>
     <param name="outbound-codec-prefs" value="OPUS,G722,PCMU,PCMA,G729"/>
     <param name="inbound-late-negotiation" value="true"/>
-    <!-- Force RTP through FreeSWITCH — prevents drop after answer -->
-    <param name="proxy-media" value="true"/>
+    <!-- Force RTP through FreeSWITCH — correct param names -->
+    <param name="inbound-proxy-media" value="true"/>
+    <param name="outbound-proxy-media" value="true"/>
     <param name="aggressive-nat-detection" value="false"/>
-    <!-- FreeSWITCH owns the session timer: proposes 1800 s, rejects anything
-         below 120 s with 422 Session Interval Too Small, handles re-INVITEs -->
-    <param name="enable-timer" value="true"/>
-    <param name="session-expires" value="1800"/>
-    <param name="minimum-session-expires" value="120"/>
+    <!-- Session timer DISABLED: prevents mid-call re-INVITE auth failure (13s drop) -->
+    <param name="enable-timer" value="false"/>
     <param name="hold-music" value="$${hold_music}"/>
     <param name="context" value="default"/>
     <param name="dtmf-duration" value="2000"/>
