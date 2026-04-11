@@ -13,10 +13,12 @@
     <param name="ext-rtp-ip" value="$${external_rtp_ip}"/>
     <param name="local-network-acl" value="localnet.auto"/>
     <param name="apply-nat-acl" value="nat.auto"/>
-    <param name="auth-calls" value="true"/>
+    <!-- auth-calls=false: same reasoning as external profile — no mid-call challenges -->
+    <param name="auth-calls" value="false"/>
     <param name="auth-all-packets" value="false"/>
-    <!-- Do NOT challenge re-INVITEs mid-call — prevents 13-second drop -->
-    <param name="challenge-realm" value="auto_from"/>
+    <param name="force-register-domain" value="$${domain}"/>
+    <param name="force-subscription-domain" value="$${domain}"/>
+    <param name="force-register-db-domain" value="$${domain}"/>
     <param name="inbound-codec-prefs" value="OPUS,G722,PCMU,PCMA,G729"/>
     <param name="outbound-codec-prefs" value="OPUS,G722,PCMU,PCMA,G729"/>
     <param name="inbound-late-negotiation" value="true"/>

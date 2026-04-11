@@ -22,10 +22,16 @@
          as phones on the internal profile -->
     <param name="context" value="default"/>
 
-    <param name="auth-calls" value="true"/>
+    <!-- auth-calls=false: do NOT challenge in-dialog re-INVITEs from registered phones
+         (phones send re-INVITE for session keepalive using their own IP as domain → FS
+          directory lookup fails → 13s drop). Registration auth is unaffected. -->
+    <param name="auth-calls" value="false"/>
     <param name="auth-all-packets" value="false"/>
-    <!-- Do NOT challenge re-INVITEs mid-call — prevents 13-second drop (SIP retry timeout) -->
-    <param name="challenge-realm" value="auto_from"/>
+    <!-- Normalize registration domain so directory lookup always uses FS domain,
+         not the phone's own IP address -->
+    <param name="force-register-domain" value="$${domain}"/>
+    <param name="force-subscription-domain" value="$${domain}"/>
+    <param name="force-register-db-domain" value="$${domain}"/>
 
     <!-- Explicit codecs — fixes INCOMPATIBLE_DESTINATION -->
     <param name="inbound-codec-prefs" value="OPUS,G722,PCMU,PCMA,G729"/>

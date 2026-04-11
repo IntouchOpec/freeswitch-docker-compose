@@ -259,37 +259,54 @@ echo ""
 echo "========================================="
 echo " Done"
 
-# ── 13. Call duration test — verifies call stays alive beyond 13 seconds ──────
-# This catches the session-timer re-INVITE drop bug (fixed by enable-timer=false)
+# ── 13. Call duration test — must stay alive > 15s (regression: 13s drop bug) ─
+# Root cause was: phone sends re-INVITE session keepalive → FS challenges (auth-calls=true)
+# → FS directory lookup fails (phone sends own IP as domain, not 192.168.1.107) → drop
+# Fix: auth-calls=false + force-register-domain + enable-timer=false
 echo ""
-echo "[ 13 ] Call Duration Test — must stay connected > 15s (regression: 13s drop)"
-echo "  Session-timer status:"
-run_remote "docker exec freeswitch fs_cli -x 'sofia status profile external' 2>&1 | grep -E 'SESSION-TO|TIMER'"
-run_remote "docker exec freeswitch fs_cli -x 'sofia status profile internal' 2>&1 | grep -E 'SESSION-TO|TIMER'"
+echo "[ 13 ] Call Duration Test — real phone must stay > 15s (regression: 13s drop)"
+echo ""
+echo "  Config check (must be false/false/0):"
+run_remote "docker exec freeswitch grep -E 'auth-calls|enable-timer' /etc/freeswitch/sip_profiles/external.xml 2>&1 | grep -v '^#\|<!--'"
+run_remote "docker exec freeswitch fs_cli -x 'sofia status profile external' 2>&1 | grep SESSION-TO"
 
-# Park a loopback leg (auto-answers immediately, no phone needed)
-PARK13=$(run_remote "docker exec freeswitch fs_cli -x \
-  \"originate {originate_timeout=5,origination_caller_id_number=1001}loopback/9196/default &park()\" 2>&1")
-PARK13_UUID=$(echo "$PARK13" | awk '/^\+OK/{print $2}')
+# Check both phones are registered
+REGS13=$(run_remote "docker exec freeswitch fs_cli -x 'show registrations' 2>&1")
+HAS_1000=$(echo "$REGS13" | grep -c "^1000," || true)
+HAS_1001=$(echo "$REGS13" | grep -c "^1001," || true)
 
-if [ -z "$PARK13_UUID" ]; then
-  echo -e "  [$FAIL_OK] Could not establish call leg: $PARK13"
+if [ "$HAS_1000" -eq 0 ] || [ "$HAS_1001" -eq 0 ]; then
+  echo -e "  [--] Need both 1000 and 1001 registered (found: 1000=$HAS_1000 1001=$HAS_1001) — skipping"
 else
-  echo "  Call established: UUID=$PARK13_UUID"
-  echo "  Waiting 16 seconds to test duration..."
-  sleep 16
+  echo "  Both phones registered."
+  echo "  >>> ANSWER ext 1000 when it rings <<<"
 
-  # Check if channel still alive after 16s
-  ALIVE=$(run_remote "docker exec freeswitch fs_cli -x 'show channels' 2>&1")
-  CH_COUNT=$(echo "$ALIVE" | grep -c "$PARK13_UUID" || true)
+  # Originate: 1001 → 1000, wait up to 20s for answer
+  CALL13=$(run_remote "docker exec freeswitch fs_cli -x \
+    'originate {origination_caller_id_number=1001,call_timeout=20}user/1000@${SIP_IP} &echo()' 2>&1")
+  CALL13_UUID=$(echo "$CALL13" | awk '/^\+OK/{print $2}')
 
-  if [ "$CH_COUNT" -gt 0 ]; then
-    echo -e "  [$PASS_OK] Call still alive at 16s — 13s drop bug is FIXED"
-    run_remote "docker exec freeswitch fs_cli -x \"uuid_kill $PARK13_UUID\"" > /dev/null 2>&1
+  if echo "$CALL13" | grep -qE "NO_ANSWER|NORMAL_CLEARING|UNALLOCATED|USER_NOT_REGISTERED"; then
+    echo -e "  [--] Not answered or routing failed: $CALL13"
+    echo "       Re-run after answering ext 1000"
+  elif [ -z "$CALL13_UUID" ]; then
+    echo -e "  [$FAIL_OK] Call failed: $CALL13"
   else
-    echo -e "  [$FAIL_OK] Call dropped before 16s — 13s drop bug still present"
-    echo "  Last logs:"
-    run_remote "docker logs freeswitch --since 20s 2>&1 | grep -E 'session|timer|re-inv|BYE|cause|Abandoned|auth' | tail -10"
+    echo "  Call answered — UUID=$CALL13_UUID"
+    echo "  Holding for 18 seconds..."
+    sleep 18
+
+    ALIVE13=$(run_remote "docker exec freeswitch fs_cli -x 'show channels' 2>&1")
+    CH13=$(echo "$ALIVE13" | grep -c "$CALL13_UUID" || true)
+
+    if [ "$CH13" -gt 0 ]; then
+      echo -e "  [$PASS_OK] Call alive at 18s — 13s drop bug FIXED"
+    else
+      echo -e "  [$FAIL_OK] Call dropped before 18s — bug still present"
+      run_remote "docker logs freeswitch --since 25s 2>&1 | \
+        grep -iE 'Abandoned|timer|BYE|cause|auth|locate|challenge' | tail -15"
+    fi
+    run_remote "docker exec freeswitch fs_cli -x 'uuid_kill $CALL13_UUID'" > /dev/null 2>&1 || true
   fi
 fi
 echo "========================================="
