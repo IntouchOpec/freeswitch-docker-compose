@@ -32,8 +32,9 @@
     <param name="context" value="default"/>
     <param name="dtmf-duration" value="2000"/>
     <!-- Fixed: use media_timeout variables instead of deprecated params -->
-    <param name="media-timeout" value="$${media_timeout}"/>
-    <param name="media-hold-timeout" value="$${media_hold_timeout}"/>
+    <!-- media-timeout/media-hold-timeout in profile are in SECONDS (correct unit) -->
+    <param name="media-timeout" value="300"/>
+    <param name="media-hold-timeout" value="1800"/>
     <param name="tls" value="false"/>
     <!-- WebSocket transport for browser/WebRTC clients (fixes WSI Error) -->
     <param name="ws-binding"  value=":5066"/>

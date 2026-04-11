@@ -56,8 +56,9 @@
     <param name="local-network-acl" value="localnet.auto"/>
     <param name="apply-nat-acl" value="nat.auto"/>
     <param name="manage-presence" value="false"/>
-    <param name="media-timeout" value="$${media_timeout}"/>
-    <param name="media-hold-timeout" value="$${media_hold_timeout}"/>
+    <!-- media-timeout/media-hold-timeout in profile are in SECONDS (correct unit) -->
+    <param name="media-timeout" value="300"/>
+    <param name="media-hold-timeout" value="1800"/>
     <param name="tls" value="false"/>
   </settings>
 </profile>

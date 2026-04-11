@@ -22,9 +22,11 @@
   <!-- Hold music -->
   <X-PRE-PROCESS cmd="set" data="hold_music=local_stream://moh"/>
 
-  <!-- Media timeouts (seconds) -->
-  <X-PRE-PROCESS cmd="set" data="media_timeout=300"/>
-  <X-PRE-PROCESS cmd="set" data="media_hold_timeout=1800"/>
+  <!-- media_timeout channel variable is interpreted in MILLISECONDS by switch_core_media.c.
+       Setting to 0 disables the channel-level RTP timeout.
+       Profiles use <param name="media-timeout"> in SECONDS (300s = 5 min) — set there directly. -->
+  <X-PRE-PROCESS cmd="set" data="media_timeout=0"/>
+  <X-PRE-PROCESS cmd="set" data="media_hold_timeout=0"/>
 
   <!-- Outbound caller ID defaults (referenced in directory user XMLs) -->
   <X-PRE-PROCESS cmd="set" data="outbound_caller_name=FreeSWITCH"/>
