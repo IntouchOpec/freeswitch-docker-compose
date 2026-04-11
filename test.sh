@@ -258,4 +258,38 @@ run_remote "docker exec freeswitch fs_cli -x 'status'"
 echo ""
 echo "========================================="
 echo " Done"
+
+# ── 13. Call duration test — verifies call stays alive beyond 13 seconds ──────
+# This catches the session-timer re-INVITE drop bug (fixed by enable-timer=false)
+echo ""
+echo "[ 13 ] Call Duration Test — must stay connected > 15s (regression: 13s drop)"
+echo "  Session-timer status:"
+run_remote "docker exec freeswitch fs_cli -x 'sofia status profile external' 2>&1 | grep -E 'SESSION-TO|TIMER'"
+run_remote "docker exec freeswitch fs_cli -x 'sofia status profile internal' 2>&1 | grep -E 'SESSION-TO|TIMER'"
+
+# Park a loopback leg (auto-answers immediately, no phone needed)
+PARK13=$(run_remote "docker exec freeswitch fs_cli -x \
+  \"originate {originate_timeout=5,origination_caller_id_number=1001}loopback/9196/default &park()\" 2>&1")
+PARK13_UUID=$(echo "$PARK13" | awk '/^\+OK/{print $2}')
+
+if [ -z "$PARK13_UUID" ]; then
+  echo -e "  [$FAIL_OK] Could not establish call leg: $PARK13"
+else
+  echo "  Call established: UUID=$PARK13_UUID"
+  echo "  Waiting 16 seconds to test duration..."
+  sleep 16
+
+  # Check if channel still alive after 16s
+  ALIVE=$(run_remote "docker exec freeswitch fs_cli -x 'show channels' 2>&1")
+  CH_COUNT=$(echo "$ALIVE" | grep -c "$PARK13_UUID" || true)
+
+  if [ "$CH_COUNT" -gt 0 ]; then
+    echo -e "  [$PASS_OK] Call still alive at 16s — 13s drop bug is FIXED"
+    run_remote "docker exec freeswitch fs_cli -x \"uuid_kill $PARK13_UUID\"" > /dev/null 2>&1
+  else
+    echo -e "  [$FAIL_OK] Call dropped before 16s — 13s drop bug still present"
+    echo "  Last logs:"
+    run_remote "docker logs freeswitch --since 20s 2>&1 | grep -E 'session|timer|re-inv|BYE|cause|Abandoned|auth' | tail -10"
+  fi
+fi
 echo "========================================="
